@@ -13,6 +13,9 @@ terraform.rc
 # Generated Keys and Secrets
 generated/
 secrets/
+scratch_migration/
+*.tar.gz
+*.tgz
 *.key
 *.pem
 gcp-service-account.json
