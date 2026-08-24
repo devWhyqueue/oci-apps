@@ -108,9 +108,10 @@ New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
 try {
     # 5a. Article-to-Speech secrets & runtime
     Write-Host "Migrating Article-to-Speech (.env, credentials, .runtime)..."
-    $a2sEnv = ssh @sourceSshOpts ubuntu@$sourceIp "sudo cat /mnt/old_instance/home/ubuntu/article-to-speech/.env"
+    $a2sEnvLines = ssh @sourceSshOpts ubuntu@$sourceIp "sudo cat /mnt/old_instance/home/ubuntu/article-to-speech/.env"
+    $a2sEnvText = ($a2sEnvLines -join "`n")
     $localA2sEnvPath = Join-Path $tempDir "a2s.env"
-    [System.IO.File]::WriteAllText($localA2sEnvPath, $a2sEnv)
+    [System.IO.File]::WriteAllText($localA2sEnvPath, $a2sEnvText)
     scp @sshOpts $localA2sEnvPath ubuntu@${publicIp}:/home/ubuntu/article-to-speech/.env
 
     $localGcpKey = Join-Path (Split-Path -Parent $RootDir) "article-to-speech\gcp-service-account.json"
@@ -126,8 +127,9 @@ try {
 
     # 5b. Berlin-Insider secrets, SSL certs, Nginx site config & database
     Write-Host "Migrating Berlin-Insider (.env, SSL certs, Nginx site, database)..."
-    $biEnv = ssh @sourceSshOpts ubuntu@$sourceIp "sudo cat /mnt/old_instance/home/ubuntu/berlin-insider/.env"
-    $biEnvUpdated = ($biEnv -replace "TELEGRAM_WEBHOOK_IP=.*", "TELEGRAM_WEBHOOK_IP=$publicIp")
+    $biEnvLines = ssh @sourceSshOpts ubuntu@$sourceIp "sudo cat /mnt/old_instance/home/ubuntu/berlin-insider/.env"
+    $biEnvText = ($biEnvLines -join "`n")
+    $biEnvUpdated = ($biEnvText -replace "TELEGRAM_WEBHOOK_IP=.*", "TELEGRAM_WEBHOOK_IP=$publicIp")
     $localBiEnvPath = Join-Path $tempDir "bi.env"
     [System.IO.File]::WriteAllText($localBiEnvPath, $biEnvUpdated)
     scp @sshOpts $localBiEnvPath ubuntu@${publicIp}:/home/ubuntu/berlin-insider/.env
@@ -146,7 +148,7 @@ try {
 
     $nginxSite = ssh @sourceSshOpts ubuntu@$sourceIp "sudo cat /mnt/old_instance/etc/nginx/sites-available/berlin-insider"
     $localNginxPath = Join-Path $tempDir "berlin-insider.conf"
-    [System.IO.File]::WriteAllText($localNginxPath, $nginxSite)
+    [System.IO.File]::WriteAllText($localNginxPath, ($nginxSite -join "`n"))
     scp @sshOpts $localNginxPath ubuntu@${publicIp}:/tmp/berlin-insider.conf
     ssh @sshOpts ubuntu@$publicIp "sudo mv /tmp/berlin-insider.conf /etc/nginx/sites-available/berlin-insider && sudo ln -sfn /etc/nginx/sites-available/berlin-insider /etc/nginx/sites-enabled/berlin-insider && sudo rm -f /etc/nginx/sites-enabled/default && sudo nginx -t && sudo systemctl reload nginx"
 } finally {
