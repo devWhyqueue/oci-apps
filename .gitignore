@@ -1,0 +1,31 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Generated Keys and Secrets
+generated/
+secrets/
+*.key
+*.pem
+gcp-service-account.json
+.env
+
+# Backups and data
+*.db
+*.sqlite*
+.runtime/
+.data/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

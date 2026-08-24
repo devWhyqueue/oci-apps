@@ -1,0 +1,49 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - docker.io
+  - docker-compose-v2
+  - nginx
+  - ufw
+  - git
+  - jq
+  - dnsutils
+
+write_files:
+  - path: /etc/ssh/sshd_config.d/99-hardened.conf
+    owner: root:root
+    permissions: "0644"
+    content: |
+      PasswordAuthentication no
+      PermitRootLogin no
+
+runcmd:
+  - sysctl --system
+  - systemctl restart ssh || systemctl restart sshd
+  - systemctl enable docker && systemctl start docker
+  - systemctl enable nginx && systemctl start nginx
+  - |
+    # Flush OCI default iptables reject rules if present
+    iptables -I INPUT 5 -p tcp --dport 22 -j ACCEPT 2>/dev/null || true
+    iptables -I INPUT 6 -p tcp --dport 80 -j ACCEPT 2>/dev/null || true
+    iptables -I INPUT 7 -p tcp --dport 443 -j ACCEPT 2>/dev/null || true
+    iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited 2>/dev/null || true
+    iptables -D INPUT -m state --state NEW -j REJECT 2>/dev/null || true
+    iptables-save > /etc/iptables/rules.v4 2>/dev/null || true
+    netfilter-persistent save 2>/dev/null || true
+    ufw --force reset
+    ufw default deny incoming
+    ufw default allow outgoing
+    ufw default allow routed
+    ufw allow 22/tcp comment 'SSH'
+    ufw allow 80/tcp comment 'HTTP'
+    ufw allow 443/tcp comment 'HTTPS'
+    ufw allow in on lo comment 'Loopback'
+    ufw --force enable
+  - touch /opt/provision_complete
