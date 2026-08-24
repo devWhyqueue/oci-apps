@@ -69,7 +69,10 @@ if ($biStatus -match "Up") {
 
 # 6. HTTP / HTTPS and Nginx Reverse Proxy Validation
 Write-Host "`n[6/6] Verifying Nginx Reverse Proxy & HTTP Endpoints..." -ForegroundColor Yellow
-$httpTests = ssh @sshOpts ubuntu@$publicIp @"
+$endpointPassed = $false
+$httpTests = ""
+for ($i = 1; $i -le 10; $i++) {
+    $httpTests = ssh @sshOpts ubuntu@$publicIp @"
 echo '--- Direct container /healthz ---'
 curl -s -f http://127.0.0.1:8080/healthz || echo 'FAILED'
 echo ''
@@ -79,10 +82,17 @@ echo ''
 echo '--- Nginx HTTPS /ui/ (SNI berlin-insider.crabdance.com) ---'
 curl -k -s -f -o /dev/null -w '%{http_code}' --resolve berlin-insider.crabdance.com:443:127.0.0.1 https://berlin-insider.crabdance.com/ui/
 "@
+    if ($httpTests -match "200" -and $httpTests -match '"status":"ok"') {
+        $endpointPassed = $true
+        break
+    }
+    Write-Host "Waiting for endpoints to be ready ($i/10)..."
+    Start-Sleep -Seconds 3
+}
 
 Write-Host "Endpoint test results:`n$httpTests"
-if ($httpTests -match "200") {
-    Write-Host "  [PASS] Berlin Insider /ui/ returned HTTP 200." -ForegroundColor Green
+if ($endpointPassed) {
+    Write-Host "  [PASS] Berlin Insider /ui/ and /healthz returned healthy responses." -ForegroundColor Green
 } else {
     throw "Berlin Insider endpoint validation failed."
 }
