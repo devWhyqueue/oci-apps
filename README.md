@@ -41,3 +41,4 @@ Terraform and automated deployment pipeline for running **Article to Speech** an
 ```powershell
 .\scripts\destroy.ps1
 ```
+

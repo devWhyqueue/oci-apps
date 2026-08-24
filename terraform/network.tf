@@ -128,3 +128,4 @@ resource "oci_core_subnet" "public" {
   prohibit_public_ip_on_vnic = false
   route_table_id             = oci_core_vcn.main.default_route_table_id
 }
+

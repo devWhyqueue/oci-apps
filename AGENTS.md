@@ -42,3 +42,4 @@ This repository contains Terraform and deployment configuration for running `art
   ```powershell
   .\scripts\destroy.ps1
   ```
+

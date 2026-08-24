@@ -27,3 +27,4 @@ Write-Host "`nRunning Terraform Destroy..." -ForegroundColor Yellow
 terraform -chdir="$TerraformDir" destroy -auto-approve
 
 Write-Host "`nInfrastructure destroyed successfully." -ForegroundColor Green
+

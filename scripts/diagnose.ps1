@@ -94,3 +94,4 @@ sudo ufw status verbose
 "@
 
 Write-Host "`nDiagnostics run complete." -ForegroundColor Cyan
+

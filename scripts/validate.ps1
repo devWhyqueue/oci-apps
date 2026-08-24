@@ -90,3 +90,4 @@ if ($httpTests -match "200") {
 Write-Host "`n==========================================" -ForegroundColor Green
 Write-Host "  ALL VALIDATION CHECKS PASSED!" -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Green
+

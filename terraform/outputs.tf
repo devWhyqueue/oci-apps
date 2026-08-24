@@ -32,3 +32,4 @@ output "ssh_command" {
   description = "Command to SSH into the instance"
   value       = "ssh -i ./generated/id_ed25519 ubuntu@${oci_core_instance.apps.public_ip}"
 }
+

@@ -29,3 +29,4 @@ resource "oci_core_instance" "apps" {
 
   preserve_boot_volume = false
 }
+

@@ -63,3 +63,4 @@ variable "allowed_ssh_cidr" {
   description = "CIDR block permitted to connect via SSH"
   default     = "0.0.0.0/0"
 }
+

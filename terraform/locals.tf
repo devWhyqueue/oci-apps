@@ -44,3 +44,4 @@ locals {
   # SSH public key resolution
   ssh_public_key = var.ssh_public_key != null ? var.ssh_public_key : trimspace(tls_private_key.auto_ssh.public_key_openssh)
 }
+
