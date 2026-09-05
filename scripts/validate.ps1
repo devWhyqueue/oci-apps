@@ -29,7 +29,7 @@ if (-not (Test-Path $keyPath)) {
     throw "Private SSH key not found at $keyPath"
 }
 icacls "$keyPath" /inheritance:r /grant:r "$($env:USERNAME):(R,W)" | Out-Null
-$sshOpts = @("-i", $keyPath, "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "ConnectTimeout=10")
+$sshOpts = @("-i", $keyPath, "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR", "-o", "ConnectTimeout=10")
 
 $sshCheck = ssh @sshOpts ubuntu@$publicIp "echo 'SSH_OK'" 2>$null
 if ($sshCheck -match "SSH_OK") {

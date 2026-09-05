@@ -39,7 +39,13 @@ Write-Host "Provisioned Instance Public IP: $publicIp" -ForegroundColor Green
 
 # 2. Wait for SSH Connectivity
 Write-Host "`n[2/7] Waiting for SSH Connectivity..." -ForegroundColor Yellow
-$sshOpts = @("-i", $keyPath, "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "ConnectTimeout=5")
+$sshOpts = @("-i", $keyPath, "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR", "-o", "ConnectTimeout=5")
+
+function Invoke-RemoteBash {
+    param([string]$Script)
+    $normalized = $Script -replace "`r`n", "`n"
+    ssh @sshOpts ubuntu@$publicIp $normalized
+}
 $retries = 30
 $connected = $false
 for ($i = 1; $i -le $retries; $i++) {
@@ -77,7 +83,7 @@ if (-not $cloudInitDone) {
 
 # 4. Clone Repositories
 Write-Host "`n[4/7] Cloning Application Repositories..." -ForegroundColor Yellow
-ssh @sshOpts ubuntu@$publicIp @"
+Invoke-RemoteBash @"
 set -e
 if [ ! -d "/home/ubuntu/article-to-speech/.git" ]; then
     git clone https://github.com/devWhyqueue/article-to-speech.git /home/ubuntu/article-to-speech
@@ -155,7 +161,7 @@ try {
     Remove-Item -Recurse -Force -Path $tempDir -ErrorAction SilentlyContinue
 }
 
-ssh @sshOpts ubuntu@$publicIp @"
+Invoke-RemoteBash @"
 set -e
 sudo usermod -aG docker ubuntu
 sudo chown -R ubuntu:ubuntu /home/ubuntu/article-to-speech /home/ubuntu/berlin-insider
@@ -163,7 +169,7 @@ sudo chown -R ubuntu:ubuntu /home/ubuntu/article-to-speech /home/ubuntu/berlin-i
 
 # 6. Build and Launch Containers
 Write-Host "`n[6/7] Building and Launching Docker Containers..." -ForegroundColor Yellow
-ssh @sshOpts ubuntu@$publicIp @"
+Invoke-RemoteBash @"
 set -e
 echo '--- Starting Article-to-Speech ---'
 cd /home/ubuntu/article-to-speech

@@ -58,11 +58,17 @@ if (-not (Test-Path $keyPath)) {
 }
 icacls "$keyPath" /inheritance:r /grant:r "$($env:USERNAME):(R,W)" | Out-Null
 
-$sshOpts = @("-i", $keyPath, "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "ConnectTimeout=10")
+$sshOpts = @("-i", $keyPath, "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR", "-o", "ConnectTimeout=10")
+
+function Invoke-RemoteBash {
+    param([string]$Script)
+    $normalized = $Script -replace "`r`n", "`n"
+    ssh @sshOpts ubuntu@$publicIp $normalized
+}
 
 # 4. Remote System Diagnostics
 Write-Host "`n--- 4. VM SYSTEM HEALTH ---" -ForegroundColor Yellow
-ssh @sshOpts ubuntu@$publicIp @"
+Invoke-RemoteBash @"
 echo '=== UPTIME & LOAD ==='
 uptime
 echo '=== MEMORY USAGE ==='
@@ -73,7 +79,7 @@ df -h /
 
 # 5. Docker Containers
 Write-Host "`n--- 5. DOCKER STATUS ---" -ForegroundColor Yellow
-ssh @sshOpts ubuntu@$publicIp @"
+Invoke-RemoteBash @"
 echo '=== DOCKER CONTAINERS ==='
 sudo docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 echo '=== ARTICLE-TO-SPEECH LOGS (LAST 15 LINES) ==='
@@ -84,7 +90,7 @@ sudo docker logs --tail 15 berlin-insider 2>/dev/null || echo 'No logs'
 
 # 6. Nginx & Firewall
 Write-Host "`n--- 6. NGINX & FIREWALL STATUS ---" -ForegroundColor Yellow
-ssh @sshOpts ubuntu@$publicIp @"
+Invoke-RemoteBash @"
 echo '=== NGINX STATUS ==='
 sudo systemctl status nginx --no-pager -l | head -n 10
 echo '=== LISTENING PORTS ==='
