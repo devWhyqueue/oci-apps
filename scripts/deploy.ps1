@@ -22,7 +22,7 @@ Write-Host "Generated Dir:  $GeneratedDir"
 Write-Host "Pihole Key:     $SourcePiholeKey"
 
 # 1. Apply Terraform
-Write-Host "`n[1/7] Applying Terraform Infrastructure..." -ForegroundColor Yellow
+Write-Host "`n[1/8] Applying Terraform Infrastructure..." -ForegroundColor Yellow
 terraform -chdir="$TerraformDir" init
 terraform -chdir="$TerraformDir" apply -auto-approve
 
@@ -38,7 +38,7 @@ if (Test-Path $keyPath) {
 Write-Host "Provisioned Instance Public IP: $publicIp" -ForegroundColor Green
 
 # 2. Wait for SSH Connectivity
-Write-Host "`n[2/7] Waiting for SSH Connectivity..." -ForegroundColor Yellow
+Write-Host "`n[2/8] Waiting for SSH Connectivity..." -ForegroundColor Yellow
 $sshOpts = @("-i", $keyPath, "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR", "-o", "ConnectTimeout=5")
 
 function Invoke-RemoteBash {
@@ -65,7 +65,7 @@ if (-not $connected) {
 }
 
 # 3. Wait for Cloud-Init Completion
-Write-Host "`n[3/7] Waiting for Host Cloud-Init Provisioning..." -ForegroundColor Yellow
+Write-Host "`n[3/8] Waiting for Host Cloud-Init Provisioning..." -ForegroundColor Yellow
 $cloudInitDone = $false
 for ($i = 1; $i -le 40; $i++) {
     $status = ssh @sshOpts ubuntu@$publicIp "test -f /opt/provision_complete && echo 'READY' || echo 'PENDING'" 2>$null
@@ -82,7 +82,7 @@ if (-not $cloudInitDone) {
 }
 
 # 4. Clone Repositories
-Write-Host "`n[4/7] Cloning Application Repositories..." -ForegroundColor Yellow
+Write-Host "`n[4/8] Cloning Application Repositories..." -ForegroundColor Yellow
 Invoke-RemoteBash @"
 set -e
 if [ ! -d "/home/ubuntu/article-to-speech/.git" ]; then
@@ -99,7 +99,7 @@ fi
 "@
 
 # 5. Migrate Secrets, Configs, SSL, and Data
-Write-Host "`n[5/7] Migrating Secrets, SSL Certificates, and Persistent Data..." -ForegroundColor Yellow
+Write-Host "`n[5/8] Migrating Secrets, SSL Certificates, and Persistent Data..." -ForegroundColor Yellow
 
 $piholeTfDir = Join-Path (Split-Path -Parent $RootDir) "oci-pihole\terraform"
 $piholeOutputs = terraform -chdir="$piholeTfDir" output -json | ConvertFrom-Json
@@ -168,7 +168,7 @@ sudo chown -R ubuntu:ubuntu /home/ubuntu/article-to-speech /home/ubuntu/berlin-i
 "@
 
 # 6. Build and Launch Containers
-Write-Host "`n[6/7] Building and Launching Docker Containers..." -ForegroundColor Yellow
+Write-Host "`n[6/8] Building and Launching Docker Containers..." -ForegroundColor Yellow
 Invoke-RemoteBash @"
 set -e
 echo '--- Starting Article-to-Speech ---'
@@ -180,7 +180,12 @@ cd /home/ubuntu/berlin-insider
 sudo docker compose up -d --build
 "@
 
-# 7. Run Validation
-Write-Host "`n[7/7] Running Validation Suite..." -ForegroundColor Yellow
+# 7. Install Auto-Update Timer
+Write-Host "`n[7/8] Installing Auto-Update Timer..." -ForegroundColor Yellow
+$installAutoUpdateScript = Join-Path $ScriptDir "install-auto-update.ps1"
+& $installAutoUpdateScript -TerraformDir "$TerraformDir" -GeneratedDir "$GeneratedDir"
+
+# 8. Run Validation
+Write-Host "`n[8/8] Running Validation Suite..." -ForegroundColor Yellow
 $validateScript = Join-Path $ScriptDir "validate.ps1"
 & $validateScript -TerraformDir "$TerraformDir" -GeneratedDir "$GeneratedDir"

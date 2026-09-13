@@ -17,13 +17,13 @@ Write-Host "  Validating OCI Apps Deployment" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
 # 1. Read Terraform outputs
-Write-Host "`n[1/6] Reading Terraform Outputs..." -ForegroundColor Yellow
+Write-Host "`n[1/7] Reading Terraform Outputs..." -ForegroundColor Yellow
 $outputs = terraform -chdir="$TerraformDir" output -json | ConvertFrom-Json
 $publicIp = $outputs.public_ip.value
 Write-Host "Target Host IP: $publicIp" -ForegroundColor Green
 
 # 2. SSH Connection Check
-Write-Host "`n[2/6] Verifying SSH Access..." -ForegroundColor Yellow
+Write-Host "`n[2/7] Verifying SSH Access..." -ForegroundColor Yellow
 $keyPath = Join-Path $GeneratedDir "id_ed25519"
 if (-not (Test-Path $keyPath)) {
     throw "Private SSH key not found at $keyPath"
@@ -39,7 +39,7 @@ if ($sshCheck -match "SSH_OK") {
 }
 
 # 3. Cloud-Init Completion
-Write-Host "`n[3/6] Verifying Cloud-Init Provisioning..." -ForegroundColor Yellow
+Write-Host "`n[3/7] Verifying Cloud-Init Provisioning..." -ForegroundColor Yellow
 $cloudInitCheck = ssh @sshOpts ubuntu@$publicIp "test -f /opt/provision_complete && echo 'PROVISION_OK' || echo 'WAIT'" 2>$null
 if ($cloudInitCheck -match "PROVISION_OK") {
     Write-Host "  [PASS] Host provisioning is complete." -ForegroundColor Green
@@ -48,7 +48,7 @@ if ($cloudInitCheck -match "PROVISION_OK") {
 }
 
 # 4. Article-to-Speech Container Status
-Write-Host "`n[4/6] Verifying Article-to-Speech..." -ForegroundColor Yellow
+Write-Host "`n[4/7] Verifying Article-to-Speech..." -ForegroundColor Yellow
 $a2sStatus = ssh @sshOpts ubuntu@$publicIp "sudo docker ps --filter 'name=article-to-speech' --format '{{.Names}}|{{.Status}}'" 2>$null
 Write-Host "  Container status: $a2sStatus"
 if ($a2sStatus -match "Up") {
@@ -58,7 +58,7 @@ if ($a2sStatus -match "Up") {
 }
 
 # 5. Berlin Insider Container Status & Endpoints
-Write-Host "`n[5/6] Verifying Berlin Insider Container..." -ForegroundColor Yellow
+Write-Host "`n[5/7] Verifying Berlin Insider Container..." -ForegroundColor Yellow
 $biStatus = ssh @sshOpts ubuntu@$publicIp "sudo docker ps --filter 'name=berlin-insider' --format '{{.Names}}|{{.Status}}'" 2>$null
 Write-Host "  Container status: $biStatus"
 if ($biStatus -match "Up") {
@@ -68,7 +68,7 @@ if ($biStatus -match "Up") {
 }
 
 # 6. HTTP / HTTPS and Nginx Reverse Proxy Validation
-Write-Host "`n[6/6] Verifying Nginx Reverse Proxy & HTTP Endpoints..." -ForegroundColor Yellow
+Write-Host "`n[6/7] Verifying Nginx Reverse Proxy & HTTP Endpoints..." -ForegroundColor Yellow
 $endpointPassed = $false
 $httpTests = ""
 for ($i = 1; $i -le 10; $i++) {
@@ -95,6 +95,15 @@ if ($endpointPassed) {
     Write-Host "  [PASS] Berlin Insider /ui/ and /healthz returned healthy responses." -ForegroundColor Green
 } else {
     throw "Berlin Insider endpoint validation failed."
+}
+
+# 7. Auto-Update Timer Status
+Write-Host "`n[7/7] Verifying Auto-Update Timer..." -ForegroundColor Yellow
+$timerStatus = ssh @sshOpts ubuntu@$publicIp "systemctl is-active oci-apps-update.timer" 2>$null
+if ($timerStatus -match "^active") {
+    Write-Host "  [PASS] oci-apps-update.timer is active." -ForegroundColor Green
+} else {
+    throw "oci-apps-update.timer is not active (status: $timerStatus)."
 }
 
 Write-Host "`n==========================================" -ForegroundColor Green

@@ -14,6 +14,7 @@ This repository contains Terraform and deployment configuration for running `art
    - Host firewall (`ufw`) blocks all other inbound ports.
    - Both applications run as containerized Docker services binding to localhost (`127.0.0.1`).
    - Host Nginx serves as the SSL reverse proxy terminating HTTPS for `berlin-insider`.
+   - `oci-apps-update.timer` polls `main` on both app repos every 5 minutes and rebuilds on fast-forward; no manual redeploy needed for code-only changes.
 
 3. **Secret Management**:
    - Private keys, API tokens (`OPENAI_API_KEY`, `TELEGRAM_BOT_TOKEN`), and service account credentials must never be stored in Git or Terraform state.
@@ -34,6 +35,11 @@ This repository contains Terraform and deployment configuration for running `art
   ```powershell
   .\scripts\validate.ps1
   ```
+- **Install/Reinstall Auto-Update Timer** (safe on live host, does not touch `.env`/`.data`/`.runtime`):
+  ```powershell
+  .\scripts\install-auto-update.ps1
+  ```
+  Logs: `journalctl -u oci-apps-update`.
 - **Diagnose**:
   ```powershell
   .\scripts\diagnose.ps1
