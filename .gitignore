@@ -32,3 +32,5 @@ gcp-service-account.json
 Thumbs.db
 .idea/
 .vscode/
+
+apps/

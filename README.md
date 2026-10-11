@@ -1,6 +1,6 @@
-# OCI Apps Deployment: Article-to-Speech & Berlin Insider
+# OCI Apps Deployment
 
-Terraform and automated deployment pipeline for running **Article to Speech** and **Berlin Insider** on Oracle Cloud Infrastructure (OCI) Always Free tier.
+Terraform and automated deployment pipeline for running containerized apps on Oracle Cloud Infrastructure (OCI) Always Free tier. The apps live in their own Git repositories; local checkouts under `apps/` are gitignored.
 
 ## Architecture
 
@@ -9,12 +9,11 @@ Terraform and automated deployment pipeline for running **Article to Speech** an
 - **Public Ingress**:
   - `TCP 22`: SSH management
   - `TCP 80`: HTTP (redirects to HTTPS)
-  - `TCP 443`: HTTPS (Berlin Insider UI & Telegram Webhook)
+  - `TCP 443`: HTTPS (app web UI & Telegram webhook)
 - **Services**:
-  - `article-to-speech`: Docker Compose container running in long-polling mode with persistent audio artifacts.
-  - `berlin-insider`: Docker Compose container exposing internal port 8080 with Playwright Chromium and persistent SQLite database.
-  - `nginx`: Host reverse proxy terminating SSL (`berlin-insider.crabdance.com`) and routing traffic to `127.0.0.1:8080`.
-  - `oci-apps-update.timer`: systemd timer polling `main` on both repos every 5 minutes; fast-forwards and rebuilds on new commits.
+  - App containers: one Docker Compose service per app repo, bound to `127.0.0.1`, with persistent data on the host.
+  - `nginx`: Host reverse proxy terminating SSL and routing traffic to `127.0.0.1:8080`.
+  - `oci-apps-update.timer`: systemd timer polling `main` on each app repo every 5 minutes; fast-forwards and rebuilds on new commits.
 
 ## Quick Start
 
