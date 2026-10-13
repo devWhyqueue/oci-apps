@@ -67,6 +67,14 @@ if ($biStatus -match "Up") {
     throw "Berlin-insider container is not running!"
 }
 
+$bcnStatus = ssh @sshOpts ubuntu@$publicIp "sudo docker ps --filter 'name=bcn-half' --format '{{.Names}}|{{.Status}}'" 2>$null
+Write-Host "  Container status: $bcnStatus"
+if ($bcnStatus -match "Up") {
+    Write-Host "  [PASS] bcn-half container is running." -ForegroundColor Green
+} else {
+    throw "bcn-half container is not running!"
+}
+
 # 6. HTTP / HTTPS and Nginx Reverse Proxy Validation
 Write-Host "`n[6/7] Verifying Nginx Reverse Proxy & HTTP Endpoints..." -ForegroundColor Yellow
 $endpointPassed = $false

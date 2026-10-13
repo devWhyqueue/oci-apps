@@ -1,4 +1,4 @@
-# scripts/install-auto-update.ps1 - Install systemd timer that auto-pulls & rebuilds both apps
+# scripts/install-auto-update.ps1 - Install systemd timer that auto-pulls & rebuilds all apps
 [CmdletBinding()]
 param(
     [string]$TerraformDir,
@@ -40,7 +40,7 @@ Invoke-RemoteBash @'
 sudo tee /usr/local/bin/oci-apps-update.sh > /dev/null <<'SCRIPT'
 #!/bin/bash
 rc=0
-for app in article-to-speech berlin-insider; do
+for app in article-to-speech berlin-insider bcn-half; do
   (
     set -e
     cd /home/ubuntu/$app

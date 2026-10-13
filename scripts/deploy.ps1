@@ -96,6 +96,12 @@ if [ ! -d "/home/ubuntu/berlin-insider/.git" ]; then
 else
     cd /home/ubuntu/berlin-insider && git pull
 fi
+
+if [ ! -d "/home/ubuntu/bcn-half/.git" ]; then
+    git clone https://github.com/devWhyqueue/bcn-half.git /home/ubuntu/bcn-half
+else
+    cd /home/ubuntu/bcn-half && git pull
+fi
 "@
 
 # 5. Migrate Secrets, Configs, SSL, and Data
@@ -157,6 +163,15 @@ try {
     [System.IO.File]::WriteAllText($localNginxPath, ($nginxSite -join "`n"))
     scp @sshOpts $localNginxPath ubuntu@${publicIp}:/tmp/berlin-insider.conf
     ssh @sshOpts ubuntu@$publicIp "sudo mv /tmp/berlin-insider.conf /etc/nginx/sites-available/berlin-insider && sudo ln -sfn /etc/nginx/sites-available/berlin-insider /etc/nginx/sites-enabled/berlin-insider && sudo rm -f /etc/nginx/sites-enabled/default && sudo nginx -t && sudo systemctl reload nginx"
+
+    # 5c. bcn-half secrets
+    $localBcnEnv = Join-Path $RootDir "apps\bcn-half\.env"
+    if (Test-Path $localBcnEnv) {
+        Write-Host "Copying bcn-half .env..."
+        scp @sshOpts $localBcnEnv ubuntu@${publicIp}:/home/ubuntu/bcn-half/.env
+    } else {
+        Write-Warning "apps\bcn-half\.env not found; bcn-half will not start."
+    }
 } finally {
     Remove-Item -Recurse -Force -Path $tempDir -ErrorAction SilentlyContinue
 }
@@ -164,7 +179,7 @@ try {
 Invoke-RemoteBash @"
 set -e
 sudo usermod -aG docker ubuntu
-sudo chown -R ubuntu:ubuntu /home/ubuntu/article-to-speech /home/ubuntu/berlin-insider
+sudo chown -R ubuntu:ubuntu /home/ubuntu/article-to-speech /home/ubuntu/berlin-insider /home/ubuntu/bcn-half
 "@
 
 # 6. Build and Launch Containers
@@ -177,6 +192,10 @@ sudo docker compose up -d --build
 
 echo '--- Starting Berlin-Insider ---'
 cd /home/ubuntu/berlin-insider
+sudo docker compose up -d --build
+
+echo '--- Starting bcn-half ---'
+cd /home/ubuntu/bcn-half
 sudo docker compose up -d --build
 "@
 

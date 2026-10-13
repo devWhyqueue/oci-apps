@@ -86,6 +86,8 @@ echo '=== ARTICLE-TO-SPEECH LOGS (LAST 15 LINES) ==='
 sudo docker logs --tail 15 article-to-speech-app-1 2>/dev/null || sudo docker logs --tail 15 article-to-speech-app 2>/dev/null || echo 'No logs'
 echo '=== BERLIN-INSIDER LOGS (LAST 15 LINES) ==='
 sudo docker logs --tail 15 berlin-insider 2>/dev/null || echo 'No logs'
+echo '=== BCN-HALF LOGS (LAST 15 LINES) ==='
+sudo docker logs --tail 15 bcn-half 2>/dev/null || echo 'No logs'
 "@
 
 # 6. Nginx & Firewall
